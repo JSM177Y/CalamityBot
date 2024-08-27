@@ -63,6 +63,12 @@ async def check_new_video():
 
         for channel_id in channel_ids:
             print(f"Checking channel: {channel_id}")
+            
+            # Debug statement: Check if the channel ID is formatted correctly
+            if not channel_id.startswith("UC"):
+                print(f"Invalid channel ID format detected: {channel_id}")
+                continue
+
             request = youtube.search().list(
                 part='snippet',
                 channelId=channel_id,
