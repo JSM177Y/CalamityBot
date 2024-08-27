@@ -57,9 +57,14 @@ def get_channel_id_by_custom_handle(handle):
     response = request.execute()
 
     if 'items' in response and len(response['items']) > 0:
-        return response['items'][0]['snippet']['channelId']
+        channel_id = response['items'][0]['snippet']['channelId']
+        channel_title = response['items'][0]['snippet']['title']
+        print(f"Retrieved channel ID: {channel_id} for channel handle: {handle} (Channel Title: {channel_title})")
+        return channel_id
+    else:
+        print(f"No channel found for handle: {handle}")
+        return None  # Return None if the channel is not found
 
-    return None  # Return None if the channel is not found
 
 def is_youtube_short(video_url):
     # Check if the URL contains "/shorts/"
