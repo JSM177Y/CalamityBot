@@ -42,9 +42,17 @@ def read_channel_configs():
             channels = [line.strip() for line in file if line.strip()]
     return channels
 
-def get_channel_id_by_scraping(handle):
-    url = f"https://www.youtube.com/{handle}"
-    response = requests.get(url)
+def get_channel_id_by_scraping(url):
+    # Extract the handle from the URL
+    if '@' in url:
+        handle = url.split('@')[1].strip('/')
+    else:
+        print(f"Invalid URL format: {url}")
+        return None
+    
+    channel_url = f"https://www.youtube.com/@{handle}"
+    response = requests.get(channel_url)
+    
     if response.status_code == 200:
         soup = BeautifulSoup(response.content, 'html.parser')
         # Extract the channel ID from the HTML meta tag
@@ -73,10 +81,10 @@ async def on_ready():
 async def check_new_video():
     try:
         print("Checking for new videos...")
-        channel_handles = read_channel_configs()
+        channel_urls = read_channel_configs()
 
-        for handle in channel_handles:
-            channel_id = get_channel_id_by_scraping(handle)
+        for url in channel_urls:
+            channel_id = get_channel_id_by_scraping(url)
 
             if channel_id:
                 request = youtube.search().list(
@@ -119,7 +127,7 @@ async def check_new_video():
                 else:
                     print("No new videos found in the latest API response.")
             else:
-                print(f"Channel not found for handle: {handle}")
+                print(f"Channel not found for handle: {url}")
 
     except Exception as e:
         print(f"Error during YouTube video check: {e}")
