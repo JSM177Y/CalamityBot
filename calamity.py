@@ -48,6 +48,25 @@ def get_channel_id_by_custom_handle(handle):
     # Remove the '@' from the handle
     handle = handle.lstrip('@')
     
+    # Use the channels.list method to get the channel ID directly by username or custom URL
+    request = youtube.channels().list(
+        part='id,snippet',
+        forUsername=handle
+    )
+    response = request.execute()
+
+    if 'items' in response and len(response['items']) > 0:
+        channel_id = response['items'][0]['id']
+        channel_title = response['items'][0]['snippet']['title']
+        print(f"Retrieved channel ID: {channel_id} for channel handle: {handle} (Channel Title: {channel_title})")
+        return channel_id
+    else:
+        print(f"No channel found for handle: {handle}. Attempting search by query.")
+        
+        # Fall back to the search method if forUsername fails
+        return get_channel_id_by_search(handle)
+
+def get_channel_id_by_search(handle):
     request = youtube.search().list(
         part='snippet',
         q=handle,
@@ -59,12 +78,11 @@ def get_channel_id_by_custom_handle(handle):
     if 'items' in response and len(response['items']) > 0:
         channel_id = response['items'][0]['snippet']['channelId']
         channel_title = response['items'][0]['snippet']['title']
-        print(f"Retrieved channel ID: {channel_id} for channel handle: {handle} (Channel Title: {channel_title})")
+        print(f"Retrieved channel ID via search: {channel_id} for handle: {handle} (Channel Title: {channel_title})")
         return channel_id
     else:
-        print(f"No channel found for handle: {handle}")
+        print(f"No channel found for handle via search: {handle}")
         return None  # Return None if the channel is not found
-
 
 def is_youtube_short(video_url):
     # Check if the URL contains "/shorts/"
