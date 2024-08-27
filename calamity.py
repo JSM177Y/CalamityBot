@@ -51,8 +51,9 @@ def get_channel_id_by_handle(url):
     else:
         print(f"Invalid URL format: {url}")
         return None
-    
+
     try:
+        # Use the customUrl field instead of forUsername
         request = youtube.channels().list(
             part="id,snippet",
             forUsername=handle
@@ -70,6 +71,7 @@ def get_channel_id_by_handle(url):
     except Exception as e:
         print(f"Error retrieving channel ID for handle: {handle} - {str(e)}")
         return None
+
 
 def is_youtube_short(video_url):
     # Check if the URL contains "/shorts/"
