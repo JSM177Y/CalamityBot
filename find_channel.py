@@ -43,6 +43,7 @@ def read_channel_configs():
     if os.path.exists(CHANNEL_CONFIG_FILE):
         with open(CHANNEL_CONFIG_FILE, 'r') as file:
             channels = [line.strip() for line in file if line.strip()]
+    print(f"Loaded channel IDs: {channels}")
     return channels
 
 def is_youtube_short(video_url):
