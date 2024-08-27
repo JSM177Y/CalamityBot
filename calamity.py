@@ -1,8 +1,7 @@
-import requests
-from bs4 import BeautifulSoup
 import os
 import discord
 from discord.ext import tasks, commands
+from googleapiclient.discovery import build
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -15,6 +14,9 @@ VIDEOS_CHANNEL_ID = int(os.getenv('VIDEOS_CHANNEL_ID'))
 SHORTS_CHANNEL_ID = int(os.getenv('SHORTS_CHANNEL_ID'))
 POSTED_VIDEOS_FILE = 'posted_videos.txt'
 CHANNEL_CONFIG_FILE = 'channel_config.txt'
+
+# YouTube API setup
+youtube = build('youtube', 'v3', developerKey=YOUTUBE_API_KEY)
 
 # Set up Discord intents
 intents = discord.Intents.default()
@@ -42,7 +44,7 @@ def read_channel_configs():
             channels = [line.strip() for line in file if line.strip()]
     return channels
 
-def get_channel_id_by_scraping(url):
+def get_channel_id_by_handle(url):
     # Extract the handle from the URL
     if '@' in url:
         handle = url.split('@')[1].strip('/')
@@ -50,22 +52,23 @@ def get_channel_id_by_scraping(url):
         print(f"Invalid URL format: {url}")
         return None
     
-    channel_url = f"https://www.youtube.com/@{handle}"
-    response = requests.get(channel_url)
-    
-    if response.status_code == 200:
-        soup = BeautifulSoup(response.content, 'html.parser')
-        # Extract the channel ID from the HTML meta tag
-        meta_tag = soup.find('meta', {'itemprop': 'channelId'})
-        if meta_tag:
-            channel_id = meta_tag['content']
-            print(f"Retrieved channel ID: {channel_id} for channel handle: {handle}")
+    try:
+        request = youtube.channels().list(
+            part="id,snippet",
+            forUsername=handle
+        )
+        response = request.execute()
+
+        if 'items' in response and len(response['items']) > 0:
+            channel_id = response['items'][0]['id']
+            channel_title = response['items'][0]['snippet']['title']
+            print(f"Retrieved channel ID: {channel_id} for handle: {handle} (Channel Title: {channel_title})")
             return channel_id
         else:
-            print(f"Could not find channel ID for handle: {handle}")
+            print(f"No channel found for handle: {handle}")
             return None
-    else:
-        print(f"Failed to fetch the page for handle: {handle}")
+    except Exception as e:
+        print(f"Error retrieving channel ID for handle: {handle} - {str(e)}")
         return None
 
 def is_youtube_short(video_url):
@@ -84,7 +87,7 @@ async def check_new_video():
         channel_urls = read_channel_configs()
 
         for url in channel_urls:
-            channel_id = get_channel_id_by_scraping(url)
+            channel_id = get_channel_id_by_handle(url)
 
             if channel_id:
                 request = youtube.search().list(
