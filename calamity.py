@@ -10,8 +10,8 @@ load_dotenv()
 # Variables
 DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
 YOUTUBE_API_KEY = os.getenv('YOUTUBE_API_KEY')
-VIDEOS_CHANNEL_ID = 1210301630814224465  # Replace with your Discord videos channel ID
-SHORTS_CHANNEL_ID = 1210301630814224466  # Replace with your Discord shorts channel ID
+VIDEOS_CHANNEL_ID = os.getenv('VIDEOS_CHANNEL_ID')
+SHORTS_CHANNEL_ID = os.getenv('SHORTS_CHANNEL_ID')
 POSTED_VIDEOS_FILE = 'posted_videos.txt'
 CHANNEL_CONFIG_FILE = 'channel_config.txt'
 
