@@ -14,6 +14,7 @@ VIDEOS_CHANNEL_ID = int(os.getenv('VIDEOS_CHANNEL_ID'))
 SHORTS_CHANNEL_ID = int(os.getenv('SHORTS_CHANNEL_ID'))
 POSTED_VIDEOS_FILE = 'posted_videos.txt'
 CHANNEL_CONFIG_FILE = 'channel_config.txt'
+
 # YouTube API setup
 youtube = build('youtube', 'v3', developerKey=YOUTUBE_API_KEY)
 
@@ -60,6 +61,7 @@ async def check_new_video():
         channel_ids = read_channel_configs()
 
         for channel_id in channel_ids:
+            print(f"Checking channel: {channel_id}")
             request = youtube.search().list(
                 part='snippet',
                 channelId=channel_id,
@@ -69,7 +71,7 @@ async def check_new_video():
             )
             response = request.execute()
 
-            if response['items']:
+            if 'items' in response and len(response['items']) > 0:
                 latest_video = response['items'][0]
                 video_id = latest_video['id']['videoId']
                 posted_videos = read_posted_videos()
@@ -98,7 +100,7 @@ async def check_new_video():
                 else:
                     print("No new video or same video found.")
             else:
-                print("No new videos found in the latest API response.")
+                print(f"No new videos found in the latest API response for channel {channel_id}.")
 
     except Exception as e:
         print(f"Error during YouTube video check: {e}")
