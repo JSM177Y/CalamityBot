@@ -63,51 +63,50 @@ async def check_new_video():
 
         for channel_id in channel_ids:
             print(f"Checking channel: {channel_id}")
-            
-            # Debug statement: Check if the channel ID is formatted correctly
-            if not channel_id.startswith("UC"):
-                print(f"Invalid channel ID format detected: {channel_id}")
-                continue
 
-            request = youtube.search().list(
-                part='snippet',
-                channelId=channel_id,
-                order='date',
-                type='video',
-                maxResults=1
-            )
-            response = request.execute()
+            # Only make the request if the channel ID format is correct
+            if channel_id.startswith("UC"):
+                request = youtube.search().list(
+                    part='snippet',
+                    channelId=channel_id,
+                    order='date',
+                    type='video',
+                    maxResults=1
+                )
+                response = request.execute()
 
-            if 'items' in response and len(response['items']) > 0:
-                latest_video = response['items'][0]
-                video_id = latest_video['id']['videoId']
-                posted_videos = read_posted_videos()
+                if 'items' in response and len(response['items']) > 0:
+                    latest_video = response['items'][0]
+                    video_id = latest_video['id']['videoId']
+                    posted_videos = read_posted_videos()
 
-                if video_id and video_id not in posted_videos:
-                    write_posted_video(video_id)
-                    video_title = latest_video['snippet']['title']
-                    video_url = f'https://www.youtube.com/watch?v={video_id}'
+                    if video_id and video_id not in posted_videos:
+                        write_posted_video(video_id)
+                        video_title = latest_video['snippet']['title']
+                        video_url = f'https://www.youtube.com/watch?v={video_id}'
 
-                    # Determine the appropriate channel based on video type
-                    if is_youtube_short(video_url):
-                        channel = bot.get_channel(SHORTS_CHANNEL_ID)
+                        # Determine the appropriate channel based on video type
+                        if is_youtube_short(video_url):
+                            channel = bot.get_channel(SHORTS_CHANNEL_ID)
+                        else:
+                            channel = bot.get_channel(VIDEOS_CHANNEL_ID)
+
+                        message = f'🎥 **New Video Uploaded:**\n{video_title}\n{video_url}'
+
+                        if channel:
+                            if not channel.permissions_for(channel.guild.me).send_messages:
+                                print(f"Do not have permission to send messages in {channel.name}")
+                                return
+                            await channel.send(message)
+                            print(f"Posted new video: {video_title} in {channel.name}")
+                        else:
+                            print("Channel not found.")
                     else:
-                        channel = bot.get_channel(VIDEOS_CHANNEL_ID)
-
-                    message = f'🎥 **New Video Uploaded:**\n{video_title}\n{video_url}'
-
-                    if channel:
-                        if not channel.permissions_for(channel.guild.me).send_messages:
-                            print(f"Do not have permission to send messages in {channel.name}")
-                            return
-                        await channel.send(message)
-                        print(f"Posted new video: {video_title} in {channel.name}")
-                    else:
-                        print("Channel not found.")
+                        print("No new video or same video found.")
                 else:
-                    print("No new video or same video found.")
+                    print(f"No new videos found in the latest API response for channel {channel_id}.")
             else:
-                print(f"No new videos found in the latest API response for channel {channel_id}.")
+                print(f"Invalid channel ID format detected: {channel_id}")
 
     except Exception as e:
         print(f"Error during YouTube video check: {e}")
